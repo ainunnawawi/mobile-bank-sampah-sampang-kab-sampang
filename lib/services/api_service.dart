@@ -11,7 +11,7 @@ class ApiService {
   // - Android Emulator: 'http://10.0.2.2:8000/api'
   // - HP Fisik: 'http://IP_LAPTOP_KAMU:8000/api'
   // Ganti URL lama menjadi link Ngrok terbaru dari temanmu:
-static const String baseUrl = "https://outmost-camper-snagged.ngrok-free.dev/api";
+  static const String baseUrl = "http://10.27.39.216:8000/api";
   static const _storage = FlutterSecureStorage();
 
   // Helper Ambil Bearer Token Sanctum

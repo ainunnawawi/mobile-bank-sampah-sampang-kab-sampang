@@ -5,6 +5,7 @@ import '../../models/nasabah_model.dart';
 import '../auth/login_screen.dart';
 import '../penarikan/penarikan_screen.dart';
 import '../setoran/setoran_screen.dart';
+import '../ranking/ranking_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -149,6 +150,7 @@ class ProfileScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+
                 const SizedBox(height: 30),
               ],
             ),
@@ -162,6 +164,21 @@ class ProfileScreen extends StatelessWidget {
         onTap: (index) {
           if (index == 0) {
             Navigator.pop(context);
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PenarikanScreen()),
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SetoranScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const RankingScreen()),
+            );
           }
         },
         type: BottomNavigationBarType.fixed,
@@ -235,21 +252,25 @@ class ProfileScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         title: const Text('Konfirmasi Keluar'),
         content: const Text('Apakah Anda yakin ingin keluar dari akun SAJUANG?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Batal', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () async {
-              Navigator.pop(context);
-              await ApiService.logout(); // Panggil API Logout & Hapus Token
+              // 1. Tutup dialog konfirmasi terlebih dahulu
+              Navigator.pop(dialogContext);
+
+              // 2. Hapus token dari SecureStorage
+              await ApiService.logout();
+
+              // 3. Pindah langsung ke Halaman Login & Hapus semua riwayat halaman sebelumnya
               if (context.mounted) {
-                Navigator.pushAndRemoveUntil(
-                  context,
+                Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
                   MaterialPageRoute(builder: (context) => const LoginScreen()),
                   (route) => false,
                 );
