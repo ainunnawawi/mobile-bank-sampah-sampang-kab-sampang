@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
+import '../../services/api_service.dart';
+import '../dashboard/dashboard_screen.dart';
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -10,6 +12,7 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0; // 0: Landing Register, 1: Step 1 Data Diri, 2: Step 2 Akun, 3: Step 3 Selesai
+  bool _isLoading = false;
 
   // Controllers Step 1
   final _namaController = TextEditingController();
@@ -32,6 +35,64 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   @override
+
+  Future<void> _handleRegister() async {
+    // 1. Validasi sederhana input form
+    if (_namaController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty ||
+        _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Harap lengkapi semua data wajib'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password dan Konfirmasi Password tidak cocok'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    // 2. Memanggil ApiService.register()
+    final result = await ApiService.register(
+      nama: _namaController.text.trim(),
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      passwordConfirmation: _confirmPasswordController.text,
+    );
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    // 3. Menangani Respon Balasan API
+    if (result['success']) {
+      // Jika sukses register & dapat token, lanjut ke Step 3 (Selesai)
+      _nextPage();
+    } else {
+      // Menampilkan pesan error jika registrasi gagal
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Registrasi gagal'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundPage,
@@ -256,13 +317,22 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: _nextPage,
+            onPressed: _isLoading ? null : _handleRegister, // <--- Panggil fungsi _handleRegister di sini
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primarySage,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             ),
-            child: const Text('Lanjut', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+            child: _isLoading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  )
+                : const Text(
+                    'Lanjut',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
           ),
         ],
       ),

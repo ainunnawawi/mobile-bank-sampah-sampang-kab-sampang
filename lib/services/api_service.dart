@@ -11,7 +11,7 @@ class ApiService {
   // - Android Emulator: 'http://10.0.2.2:8000/api'
   // - HP Fisik: 'http://IP_LAPTOP_KAMU:8000/api'
   // Ganti URL lama menjadi link Ngrok terbaru dari temanmu:
-  static const String baseUrl = "http://10.27.39.216:8000/api";
+  static const String baseUrl = "http://187.77.112.45:4001/api";
   static const _storage = FlutterSecureStorage();
 
   // Helper Ambil Bearer Token Sanctum
@@ -56,7 +56,56 @@ class ApiService {
     }
   }
 
-  // 2. API PROFIL NASABAH ME
+// 2. API REGISTER
+  static Future<Map<String, dynamic>> register({
+    required String nama,
+    required String email,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/register'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'nama': nama,
+          'email': email,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+          'device_name': 'flutter_mobile_app',
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        // Jika server langsung memberikan token, simpan ke FlutterSecureStorage
+        if (data['token'] != null) {
+          await _storage.write(key: 'auth_token', value: data['token']);
+        }
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Registrasi berhasil',
+        };
+      } else {
+        // Menampilkan pesan error dari validasi Laravel
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Gagal mendaftar, periksa data Anda',
+        };
+      }
+    } catch (e) {
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan koneksi ke server',
+      };
+    }
+  }
+
+  // 3. API PROFIL NASABAH ME
   static Future<NasabahModel?> getNasabahProfile() async {
     try {
       final token = await getToken();
@@ -79,7 +128,7 @@ class ApiService {
     }
   }
 
-  // 3. API RIWAYAT SETORAN
+  // 5. API RIWAYAT SETORAN
   static Future<List<SetoranModel>> getRiwayatSetoran() async {
     try {
       final token = await getToken();
@@ -158,7 +207,7 @@ class ApiService {
     }
   }
 
-  // API GET PENCAPAIAN / RANKING
+  // 6. API GET PENCAPAIAN / RANKING
   static Future<List<dynamic>> getPencapaian() async {
     try {
       final token = await getToken();
