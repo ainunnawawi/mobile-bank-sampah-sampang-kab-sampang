@@ -6,7 +6,8 @@ import '../auth/login_screen.dart';
 import '../penarikan/penarikan_screen.dart';
 import '../setoran/setoran_screen.dart';
 import '../ranking/ranking_screen.dart';
-
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -122,16 +123,36 @@ class ProfileScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 24.0),
                   child: Column(
                     children: [
+                      // 1. Menu Data Diri
                       _buildProfileMenuItem(
                         icon: Icons.person_outline_rounded,
                         title: 'Data diri',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(
+                                namaAwal: namaNasabah,
+                                noTelpAwal: noTelp,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
+
+                      // 2. Menu Ubah Password
                       _buildProfileMenuItem(
                         icon: Icons.lock_outline_rounded,
                         title: 'Ubah Password',
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ChangePasswordScreen(),
+                            ),
+                          );
+                        },
                       ),
                       const SizedBox(height: 14),
                       _buildProfileMenuItem(
