@@ -7,7 +7,8 @@ import '../penarikan/penarikan_screen.dart';
 import '../setoran/setoran_screen.dart';
 import '../ranking/ranking_screen.dart';
 import '../saldo/saldo_mutasi_screen.dart';
-
+import '../penarikan/ewallet_screen.dart';
+import '../notification/notification_screen.dart';
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -205,14 +206,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           icon: Icons.notifications_none_rounded,
                           label: 'Notifikasi',
                           bgColor: const Color(0xFFF28B82),
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                            );
+                          }
                         ),
                         const SizedBox(width: 32),
                         _buildMenuIconButton(
                           icon: Icons.account_balance_wallet_outlined,
                           label: 'E-Wallet',
                           bgColor: const Color(0xFFE2F0D9),
-                          onTap: () {},
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const EwalletScreen()),
+                            );
+                          }
                         ),
                       ],
                     ),

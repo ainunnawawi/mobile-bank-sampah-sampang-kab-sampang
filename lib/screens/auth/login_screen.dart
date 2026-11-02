@@ -17,16 +17,16 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscurePassword = true;
 
   @override
+
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
           // 1. Gambar Ilustrasi Background (Opsional jika ada asset-nya)
           Positioned.fill(
-            child: Container(
-              color: AppColors.backgroundPage,
-              // Jika punya gambar background, gunakan:
-              // child: Image.asset('assets/images/bg_login.png', fit: BoxFit.cover),
+            child: Image.asset(
+              'assets/images/Bg-flutter.jpeg', // Ganti dengan nama file background kamu
+              fit: BoxFit.cover, // Biar gambarnya memenuhi layar HP
             ),
           ),
           
@@ -44,31 +44,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Column(
                       children: [
                         // Placeholder Logo (Ganti dengan Image.asset jika asset logo sudah ada)
-                        Container(
-                          width: 80,
-                          height: 80,
-                          decoration: BoxDecoration(
-                            color: AppColors.backgroundLogo,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.recycling, size: 50, color: AppColors.primarySage),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'SAJUANG',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textDark,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const Text(
-                          'Sampah Jadi Uang',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textDark,
-                          ),
+                        Image.asset(
+                          'assets/images/Logo.png', // Ganti dengan nama file logo kamu
+                          width: 160,       // Atur lebar logo
+                          height: 160,      // Atur tinggi logo
+                          fit: BoxFit.contain,
                         ),
                       ],
                     ),
@@ -141,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: Colors.grey,
+                          color: const Color.fromARGB(255, 252, 252, 252),
                         ),
                         onPressed: () {
                           setState(() {
@@ -223,7 +203,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: Color.fromARGB(255, 2, 143, 101),
+                        
                       ),
                     ),
                   ),
@@ -234,7 +215,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: AppColors.primarySage.withOpacity(0.25),
+                      color: const Color.fromARGB(255, 230, 253, 238).withOpacity(0.9),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(

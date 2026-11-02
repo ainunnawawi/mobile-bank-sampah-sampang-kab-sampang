@@ -5,11 +5,13 @@ import '../../services/api_service.dart';
 class EditProfileScreen extends StatefulWidget {
   final String namaAwal;
   final String noTelpAwal;
+  final String alamatAwal;
 
   const EditProfileScreen({
     super.key,
     required this.namaAwal,
     required this.noTelpAwal,
+    this.alamatAwal = '',
   });
 
   @override
@@ -19,6 +21,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _namaController;
   late TextEditingController _noTelpController;
+  late TextEditingController _alamatController;
   bool _isLoading = false;
 
   @override
@@ -26,36 +29,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     super.initState();
     _namaController = TextEditingController(text: widget.namaAwal);
     _noTelpController = TextEditingController(text: widget.noTelpAwal);
+    _alamatController = TextEditingController(text: widget.alamatAwal);
   }
 
   @override
   void dispose() {
     _namaController.dispose();
     _noTelpController.dispose();
+    _alamatController.dispose();
     super.dispose();
   }
 
   Future<void> _handleSave() async {
-    if (_namaController.text.trim().isEmpty || _noTelpController.text.trim().isEmpty) {
+    final nama = _namaController.text.trim();
+    final noHp = _noTelpController.text.trim();
+    final alamat = _alamatController.text.trim();
+
+    if (nama.isEmpty || noHp.isEmpty || alamat.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua field wajib diisi'), backgroundColor: Colors.orange),
+        const SnackBar(content: Text('Semua field wajib diisi!'), backgroundColor: Colors.orange),
       );
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // Panggil API Update Profile (Nanti disambungkan ke backend)
-    // final result = await ApiService.updateProfile(...);
-    await Future.delayed(const Duration(seconds: 1)); // Simulasi request
+    final result = await ApiService.updateProfile(
+      nama: nama,
+      noHp: noHp,
+      alamat: alamat,
+    );
 
     setState(() => _isLoading = false);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Profil berhasil diperbarui'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(result['message']),
+          backgroundColor: result['success'] ? Colors.green : Colors.red,
+        ),
       );
-      Navigator.pop(context, true); // Return true untuk refresh data di profile_screen
+
+      if (result['success']) {
+        Navigator.pop(context, true);
+      }
     }
   }
 
@@ -79,9 +96,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           children: [
             const SizedBox(height: 10),
             _buildInputField('Nama Lengkap', _namaController, 'Masukkan Nama Lengkap'),
-            const SizedBox(height: 20),
-            _buildInputField('Nomor Telepon', _noHpControllerText(), '08...'),
-            const SizedBox(height: 40),
+            const SizedBox(height: 16),
+            _buildInputField('Nomor Telepon', _noTelpController, 'Masukkan Nomor HP', isNumber: true),
+            const SizedBox(height: 16),
+            _buildInputField('Alamat Tempat Tinggal', _alamatController, 'Masukkan Alamat Lengkap', maxLines: 3),
+            const SizedBox(height: 32),
             ElevatedButton(
               onPressed: _isLoading ? null : _handleSave,
               style: ElevatedButton.styleFrom(
@@ -99,9 +118,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  TextEditingController _noHpControllerText() => _noTelpController;
-
-  Widget _buildInputField(String label, TextEditingController controller, String hint) {
+  Widget _buildInputField(String label, TextEditingController controller, String hint, {bool isNumber = false, int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -109,6 +126,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
+          maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,

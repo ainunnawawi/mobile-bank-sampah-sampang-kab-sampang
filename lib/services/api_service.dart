@@ -250,4 +250,99 @@ class ApiService {
       return [];
     }
   }
+
+  // static Future<List<dynamic>> getPenarikan() async {
+  //   try {
+  //     final token = await _storage.read(key: 'auth_token');
+
+  //     final response = await http.get(
+  //       Uri.parse('$baseUrl/penarikan'),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Accept': 'application/json',
+  //         'Authorization': 'Bearer $token',
+  //       },
+  //     );
+
+  //     if (response.statusCode == 200) {
+  //       final body = jsonDecode(response.body);
+  //       if (body['status'] == 'success' && body['data'] != null) {
+  //         return body['data'] as List<dynamic>;
+  //       }
+  //     }
+  //     return [];
+  //   } catch (e) {
+  //     print('Error getPenarikan: $e');
+  //     return [];
+  //   }
+  // }
+  static Future<List<dynamic>> getPenarikan() async {
+    try {
+      final token = await getToken();
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/penarikan'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        
+        // Debugging untuk mengecek struktur response di terminal
+        print('Response Get Penarikan: $body');
+
+        // Jika response berupa List langsung: [ {...}, {...} ]
+        if (body is List) {
+          return body;
+        }
+
+        // Jika response dibungkus key "data": { "data": [ {...} ] }
+        if (body is Map<String, dynamic> && body.containsKey('data')) {
+          return body['data'] as List<dynamic>;
+        }
+      }
+      return [];
+    } catch (e) {
+      print('Error getPenarikan: $e');
+      return [];
+    }
+  }
+
+  // 7. API UPDATE PROFIL NASABAH
+  static Future <Map<String, dynamic>> updateProfile({
+    required String nama,
+    required String noHp,
+    required String alamat,
+  }) async {
+    try {
+      final token = await getToken();
+      final response = await http.put(
+        Uri.parse('$baseUrl/nasabah/update'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'nama': nama,
+          'no_hp': noHp,
+          'alamat': alamat,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+
+      if (response.statusCode == 200) {
+        return {'success': true, 'message': data['message'] ?? 'Profil berhasil diperbarui'};
+      } else {
+        return {'success': false, 'message': data['message'] ?? 'Gagal memperbarui profil'};
+      }
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi server: $e'};
+    }
+  }
 }
