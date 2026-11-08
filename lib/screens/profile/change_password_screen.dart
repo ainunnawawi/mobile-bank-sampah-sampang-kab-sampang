@@ -28,34 +28,53 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
   }
 
   Future<void> _handleChangePassword() async {
-    if (_oldPasswordController.text.isEmpty ||
-        _newPasswordController.text.isEmpty ||
-        _confirmPasswordController.text.isEmpty) {
+    final oldPassword = _oldPasswordController.text;
+    final newPassword = _newPasswordController.text;
+    final confirmPassword = _confirmPasswordController.text;
+
+    if (oldPassword.isEmpty || newPassword.isEmpty || confirmPassword.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap isi semua kolom password'), backgroundColor: Colors.orange),
+        const SnackBar(content: Text('Harap isi semua kolom password!'), backgroundColor: Colors.orange),
       );
       return;
     }
 
-    if (_newPasswordController.text != _confirmPasswordController.text) {
+    if (newPassword != confirmPassword) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password baru dan konfirmasi tidak cocok'), backgroundColor: Colors.red),
+        const SnackBar(content: Text('Password baru dan konfirmasi tidak cocok!'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password baru minimal 8 karakter!'), backgroundColor: Colors.orange),
       );
       return;
     }
 
     setState(() => _isLoading = true);
 
-    // Simulasi ganti password API
-    await Future.delayed(const Duration(seconds: 1));
+    // Panggil API ubah password real ke Laravel
+    final result = await ApiService.ubahPasswordProfile(
+      passwordLama: oldPassword,
+      passwordBaru: newPassword,
+      konfirmasiPassword: confirmPassword,
+    );
 
     setState(() => _isLoading = false);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password berhasil diubah'), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(result['message']),
+          backgroundColor: result['success'] ? Colors.green : Colors.red,
+        ),
       );
-      Navigator.pop(context);
+
+      if (result['success']) {
+        Navigator.pop(context);
+      }
     }
   }
 
@@ -97,7 +116,11 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               ),
               child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
                   : const Text('Simpan Password Baru', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ],

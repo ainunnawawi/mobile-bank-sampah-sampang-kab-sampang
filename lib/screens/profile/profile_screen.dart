@@ -8,6 +8,7 @@ import '../setoran/setoran_screen.dart';
 import '../ranking/ranking_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -180,11 +181,14 @@ class ProfileScreen extends StatelessWidget {
       ),
 
       // 4. BOTTOM NAVIGATION BAR
+      // 4. BOTTOM NAVIGATION BAR (Navigasi Aktif)
       bottomNavigationBar: BottomNavigationBar(
-        currentIndex: 4,
+        currentIndex: 4, // Tab Profile Aktif
         onTap: (index) {
+          if (index == 4) return; // Jika tab yang sama, jangan lakukan apa-apa
+
           if (index == 0) {
-            Navigator.pop(context);
+            Navigator.pop(context); // Kembali ke Beranda
           } else if (index == 1) {
             Navigator.pushReplacement(
               context,

@@ -3,6 +3,7 @@ import '../../utils/app_colors.dart';
 import 'register_screen.dart'; 
 import '../dashboard/dashboard_screen.dart';
 import '../../services/api_service.dart';
+import 'lupa_password_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -137,7 +138,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton(
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LupaPasswordScreen(),
+                          ),
+                        );
+                      },
                       style: TextButton.styleFrom(padding: EdgeInsets.zero),
                       child: const Text(
                         'Lupa Password?',

@@ -3,6 +3,9 @@ import '../../utils/app_colors.dart';
 import '../../services/api_service.dart';
 import '../../models/setoran_model.dart';
 import 'detail_setoran_screen.dart';
+import '../penarikan/penarikan_screen.dart';
+import '../ranking/ranking_screen.dart';
+import '../profile/profile_screen.dart';
 
 class SetoranScreen extends StatefulWidget {
   const SetoranScreen({super.key});
@@ -189,8 +192,25 @@ class _SetoranScreenState extends State<SetoranScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 2, // Tab Setoran Aktif
         onTap: (index) {
+          if (index == 2) return; // Jika tab yang sama, jangan lakukan apa-apa
+
           if (index == 0) {
-            Navigator.pop(context);
+            Navigator.pop(context); // Kembali ke Beranda
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PenarikanScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const RankingScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
           }
         },
         type: BottomNavigationBarType.fixed,
@@ -227,7 +247,7 @@ class _SetoranScreenState extends State<SetoranScreen> {
           ),
         ],
       ),
-    );
+      );
   }
 
   Widget _buildFilterChip(String label, int index) {

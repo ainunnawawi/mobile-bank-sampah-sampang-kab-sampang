@@ -1,39 +1,57 @@
 import 'package:flutter/material.dart';
-import 'utils/app_colors.dart';
-import 'screens/auth/login_screen.dart'; // Pastikan import ini sesuai lokasi file kamu
+import 'package:app_links/app_links.dart';
+import 'screens/auth/register_screen.dart';
+import 'screens/auth/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  // Variabel Global Key untuk navigasi deep link
+  final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
+  final _appLinks = AppLinks();
+
+  @override
+  void initState() {
+    super.initState();
+    _initDeepLinks();
+  }
+
+  void _initDeepLinks() {
+    // Mendengarkan saat aplikasi dibuka lewat link email (sajuang://create-password)
+    _appLinks.uriLinkStream.listen((uri) {
+      if (uri.scheme == 'sajuang' && uri.host == 'create-password') {
+        final token = uri.queryParameters['token'];
+        final email = uri.queryParameters['email'];
+
+        // Pindah layar otomatis ke RegisterScreen di Step Buat Password
+        _navigatorKey.currentState?.push(
+          MaterialPageRoute(
+            builder: (context) => RegisterScreen(
+              deepLinkToken: token,
+              deepLinkEmail: email,
+            ),
+          ),
+        );
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: _navigatorKey, // Menghubungkan GlobalKey
       title: 'SAJUANG',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        scaffoldBackgroundColor: AppColors.backgroundPage,
-        primaryColor: AppColors.primarySage,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primarySage,
-          primary: AppColors.primarySage,
-          secondary: AppColors.accentYellow,
-          surface: AppColors.backgroundPage,
-        ),
-        appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.primarySage,
-          elevation: 0,
-          foregroundColor: AppColors.textDark,
-        ),
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: AppColors.textDark),
-          bodyMedium: TextStyle(color: AppColors.textDark),
-        ),
-      ),
-      home: LoginScreen(), // <--- const sudah dihapus di sini
+      home: const LoginScreen(),
     );
   }
 }

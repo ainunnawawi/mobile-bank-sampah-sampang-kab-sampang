@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import '../../services/api_service.dart';
+import '../penarikan/penarikan_screen.dart';
+import '../setoran/setoran_screen.dart';
+import '../profile/profile_screen.dart';
 
 class RankingScreen extends StatefulWidget {
   const RankingScreen({super.key});
@@ -178,8 +181,25 @@ class _RankingScreenState extends State<RankingScreen> {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: 3, // Tab Ranking Aktif
         onTap: (index) {
+          if (index == 3) return; // Jika tab yang sama, jangan lakukan apa-apa
+
           if (index == 0) {
-            Navigator.pop(context);
+            Navigator.pop(context); // Kembali ke Beranda
+          } else if (index == 1) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PenarikanScreen()),
+            );
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SetoranScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
           }
         },
         type: BottomNavigationBarType.fixed,

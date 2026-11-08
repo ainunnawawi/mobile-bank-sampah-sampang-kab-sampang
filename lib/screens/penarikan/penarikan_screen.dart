@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import '../../services/api_service.dart';
+import '../setoran/setoran_screen.dart';
+import '../ranking/ranking_screen.dart';
+import '../profile/profile_screen.dart';
 
 class PenarikanScreen extends StatefulWidget {
   const PenarikanScreen({super.key});
@@ -13,13 +16,32 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
   int _selectedTab = 0; // 0: Ajukan Penarikan, 1: Riwayat Penarikan
   String _selectedFilter = 'Semua';
 
+  // Form Controllers
+  final _formKey = GlobalKey<FormState>();
   final _nominalController = TextEditingController();
+  final _nomorTujuanController = TextEditingController();
+  final _namaPemilikController = TextEditingController();
   final _catatanController = TextEditingController();
+
+  String _selectedMetode = 'Tunai'; // Default Tunai
   bool _isLoading = false;
 
   // Variable Simpan Saldo Real
   String _saldoTersedia = 'Rp 0';
   bool _isLoadingSaldo = true;
+
+  // Option Metode Pembayaran / Transfer
+  final List<String> _metodeOptions = const [
+    'Tunai',
+    'DANA',
+    'Gopay',
+    'OVO',
+    'ShopeePay',
+    'Bank BCA',
+    'Bank BRI',
+    'Bank BNI',
+    'Bank Mandiri',
+  ];
 
   @override
   void initState() {
@@ -30,6 +52,8 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
   @override
   void dispose() {
     _nominalController.dispose();
+    _nomorTujuanController.dispose();
+    _namaPemilikController.dispose();
     _catatanController.dispose();
     super.dispose();
   }
@@ -54,28 +78,32 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
     }
   }
 
+  // Handling Pengajuan Unified (Tunai + Transfer E-Wallet / Bank)
   void _kirimPengajuan() async {
-    final nominalStr = _nominalController.text.trim();
-    if (nominalStr.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Masukkan nominal penarikan!')),
-      );
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
-    final nominal = double.tryParse(nominalStr) ?? 0;
+    final nominal = double.tryParse(_nominalController.text.trim()) ?? 0;
     if (nominal < 10000) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Minimal penarikan adalah Rp 10.000!')),
+        const SnackBar(
+          content: Text('Minimal penarikan adalah Rp 10.000!'),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
 
     setState(() => _isLoading = true);
 
+    // Kirim data penarikan ke ApiService
+    final isTunai = _selectedMetode == 'Tunai';
     final result = await ApiService.ajukanPenarikan(
       nominal: nominal,
-      metodePenarikan: 'tunai',
+      metodePenarikan: isTunai ? 'tunai' : 'transfer',
+      namaBankEwallet: isTunai ? null : _selectedMetode,
+      nomorTujuan: isTunai
+          ? null
+          : '${_nomorTujuanController.text.trim()} a.n ${_namaPemilikController.text.trim()}',
     );
 
     setState(() => _isLoading = false);
@@ -90,17 +118,129 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
 
       if (result['success']) {
         _nominalController.clear();
+        _nomorTujuanController.clear();
+        _namaPemilikController.clear();
         _catatanController.clear();
+        setState(() => _selectedMetode = 'Tunai');
         
         // 1. Refresh saldo dari backend yang dipotong
         _loadSaldoUser();
         
-        // 2. Pindah otomatis ke tab Riwayat untuk lihat statusnya
+        // 2. Pindah otomatis ke tab Riwayat
         setState(() {
           _selectedTab = 1;
         });
       }
     }
+  }
+
+  // Tampilan Invoice / Struk Digital Modal BottomSheet
+  void _showInvoiceDialog(BuildContext context, Map<String, dynamic> item) {
+    final String status = item['status']?.toString() ?? 'Pending';
+    final String tanggal = item['created_at'] ?? item['tgl'] ?? item['tanggal'] ?? '-';
+    final String kode = item['kode_penarikan'] ?? item['kode'] ?? 'WID-${item['id'] ?? '-'}';
+    final rawNominal = item['nominal'] ?? item['jumlah'] ?? 0;
+    final String nominalStr = rawNominal is num ? 'Rp $rawNominal' : rawNominal.toString();
+    final String metode = item['metode'] ?? item['nama_bank_ewallet'] ?? 'Tunai';
+
+    Color statusColor;
+    switch (status.toLowerCase()) {
+      case 'disetujui':
+        statusColor = Colors.green;
+        break;
+      case 'ditolak':
+        statusColor = Colors.red;
+        break;
+      case 'pending':
+      default:
+        statusColor = Colors.orange;
+        break;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'STRUK / INVOICE PENARIKAN',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, letterSpacing: 1.1),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                kode,
+                style: const TextStyle(color: Colors.black45, fontSize: 12),
+              ),
+              const Divider(height: 30),
+
+              _buildInvoiceRow('Tipe Transaksi', 'Penarikan Saldo (Keluar)'),
+              _buildInvoiceRow('Metode Penarikan', metode.toUpperCase()),
+              _buildInvoiceRow('Waktu Transaksi', tanggal.toString()),
+              _buildInvoiceRow('Status Verification', status.toUpperCase(), valueColor: statusColor),
+              
+              const Divider(height: 30),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Total Penarikan', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                  Text(
+                    '- $nominalStr',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                      color: Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(context),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primarySage,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: const Text('Tutup Invoice', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildInvoiceRow(String label, String value, {Color? valueColor}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.black54, fontSize: 13)),
+          Text(value, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: valueColor ?? AppColors.textDark)),
+        ],
+      ),
+    );
   }
 
   @override
@@ -207,9 +347,69 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
             const SizedBox(height: 50),
 
             // 2. KONTEN (AJUKAN ATAU RIWAYAT)
-            _selectedTab == 0 ? _buildFormPenarikan() : _buildRiwayatPenarikan(),
+            _selectedTab == 0 ? _buildFormPenarikanUnified() : _buildRiwayatPenarikan(),
           ],
         ),
+      ),
+
+      // 3. BOTTOM NAVIGATION BAR (Navigasi Aktif)
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: 1, // Tab Penarikan Aktif
+        onTap: (index) {
+          if (index == 1) return; // Jika tab yang sama, abaikan
+
+          if (index == 0) {
+            Navigator.pop(context); // Kembali ke Beranda
+          } else if (index == 2) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const SetoranScreen()),
+            );
+          } else if (index == 3) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const RankingScreen()),
+            );
+          } else if (index == 4) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
+            );
+          }
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: const Color(0xFFF0F6F1),
+        selectedItemColor: AppColors.textDark,
+        unselectedItemColor: Colors.black45,
+        selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: const TextStyle(fontSize: 11),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home_outlined),
+            activeIcon: Icon(Icons.home_rounded),
+            label: 'Beranda',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.description_outlined),
+            activeIcon: Icon(Icons.description_rounded),
+            label: 'Penarikan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.pan_tool_outlined),
+            activeIcon: Icon(Icons.pan_tool_rounded),
+            label: 'Setoran',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.military_tech_outlined),
+            activeIcon: Icon(Icons.military_tech_rounded),
+            label: 'Ranking',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person_outline_rounded),
+            activeIcon: Icon(Icons.person_rounded),
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -242,135 +442,220 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
     );
   }
 
-  // Form Penarikan Tunai
-  Widget _buildFormPenarikan() {
+  // Unified Form Penarikan (Tunai & E-Wallet / Bank Dalam 1 Form)
+  Widget _buildFormPenarikanUnified() {
+    final bool isEwalletOrBank = _selectedMetode != 'Tunai';
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Nominal Penarikan',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _nominalController,
-            keyboardType: TextInputType.number,
-            decoration: InputDecoration(
-              hintText: 'masukkan nominal',
-              suffixText: 'Rp',
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              border: OutlineInputBorder(
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Pilih Metode Penarikan
+            const Text(
+              'Metode Penarikan',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              ),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedMetode,
+                  isExpanded: true,
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded, color: AppColors.textDark),
+                  items: _metodeOptions.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value, style: const TextStyle(fontSize: 14, color: AppColors.textDark)),
+                    );
+                  }).toList(),
+                  onChanged: (String? newValue) {
+                    if (newValue != null) {
+                      setState(() {
+                        _selectedMetode = newValue;
+                      });
+                    }
+                  },
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            'Minimal Penarikan Rp 10.000',
-            style: TextStyle(fontSize: 11, color: Colors.black54),
-          ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 16),
 
-          const Text(
-            'Catatan (opsional)',
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _catatanController,
-            maxLines: 4,
-            decoration: InputDecoration(
-              hintText: 'contoh: Untuk kebutuhan harian',
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.all(16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+            // Form Tambahan jika memilih E-Wallet / Bank
+            if (isEwalletOrBank) ...[
+              const Text(
+                'Nomor Rekening / No HP E-Wallet',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _nomorTujuanController,
+                keyboardType: TextInputType.number,
+                validator: (val) => isEwalletOrBank && (val == null || val.isEmpty) ? 'Nomor tujuan wajib diisi' : null,
+                decoration: InputDecoration(
+                  hintText: 'Contoh: 081234567890 / 1234567890',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              const Text(
+                'Nama Pemilik Rekening / Akun',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+              ),
+              const SizedBox(height: 8),
+              TextFormField(
+                controller: _namaPemilikController,
+                textCapitalization: TextCapitalization.words,
+                validator: (val) => isEwalletOrBank && (val == null || val.isEmpty) ? 'Nama pemilik wajib diisi' : null,
+                decoration: InputDecoration(
+                  hintText: 'Masukkan nama sesuai akun E-Wallet / Bank',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            // Nominal Penarikan
+            const Text(
+              'Nominal Penarikan',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              controller: _nominalController,
+              keyboardType: TextInputType.number,
+              validator: (val) => val == null || val.isEmpty ? 'Nominal wajib diisi' : null,
+              decoration: InputDecoration(
+                hintText: 'masukkan nominal',
+                suffixText: 'Rp',
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
               ),
             ),
-          ),
+            const SizedBox(height: 4),
+            const Text(
+              'Minimal Penarikan Rp 10.000',
+              style: TextStyle(fontSize: 11, color: Colors.black54),
+            ),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton(
-              onPressed: _isLoading ? null : _kirimPengajuan,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF427A53),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
+            // Catatan
+            const Text(
+              'Catatan (opsional)',
+              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: AppColors.textDark),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _catatanController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'contoh: Untuk kebutuhan harian',
+                filled: true,
+                fillColor: Colors.white,
+                contentPadding: const EdgeInsets.all(16),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
-                elevation: 0,
               ),
-              child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
-                  : const Text(
-                      'Ajukan Penarikan',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
             ),
-          ),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE8F0E9),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                    Expanded(
-                      child: Text(
-                        'Penarikan akan diverifikasi oleh petugas',
-                        style: TextStyle(fontSize: 12, color: AppColors.textDark),
-                      ),
-                    ),
-                  ],
+            SizedBox(
+              width: double.infinity,
+              height: 48,
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _kirimPengajuan,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF427A53),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
                 ),
-                SizedBox(height: 6),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
-                    Expanded(
-                      child: Text(
-                        'Proses Maksimal 1x24 jam',
-                        style: TextStyle(fontSize: 12, color: AppColors.textDark),
+                child: _isLoading
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text(
+                        'Ajukan Penarikan',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 30),
-        ],
+
+            const SizedBox(height: 24),
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F0E9),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                      Expanded(
+                        child: Text(
+                          'Penarikan akan diverifikasi oleh petugas',
+                          style: TextStyle(fontSize: 12, color: AppColors.textDark),
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 6),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('• ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                      Expanded(
+                        child: Text(
+                          'Proses Maksimal 1x24 jam',
+                          style: TextStyle(fontSize: 12, color: AppColors.textDark),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }
 
-  // Tampilan Tab Riwayat Penarikan (Data Real Backend)
+  // Tampilan Tab Riwayat Penarikan
   Widget _buildRiwayatPenarikan() {
     return Column(
       children: [
@@ -420,7 +705,6 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
 
             final realData = snapshot.data ?? [];
 
-            // Filter data riwayat berdasarkan chip
             final filteredList = realData.where((item) {
               final status = item['status']?.toString() ?? '';
               if (_selectedFilter == 'Semua') return true;
@@ -447,7 +731,6 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
               itemBuilder: (context, index) {
                 final item = filteredList[index];
 
-                // Parsing nama field fleksibel dari Laravel
                 final tanggal = item['created_at'] ?? item['tgl'] ?? item['tanggal'] ?? '-';
                 final kode = item['kode_penarikan'] ?? item['kode'] ?? 'WID-${item['id'] ?? '-'}';
                 final rawNominal = item['nominal'] ?? item['jumlah'] ?? 0;
@@ -455,11 +738,14 @@ class _PenarikanScreenState extends State<PenarikanScreen> {
 
                 final jumlahStr = rawNominal is num ? 'Rp $rawNominal' : rawNominal.toString();
 
-                return _buildPenarikanCard(
-                  tanggal: tanggal.toString(),
-                  kode: kode.toString(),
-                  jumlah: jumlahStr,
-                  status: status.toString(),
+                return GestureDetector(
+                  onTap: () => _showInvoiceDialog(context, item), // <--- KLIK ITEM BUAT LIHAT INVOICE STRUK
+                  child: _buildPenarikanCard(
+                    tanggal: tanggal.toString(),
+                    kode: kode.toString(),
+                    jumlah: jumlahStr,
+                    status: status.toString(),
+                  ),
                 );
               },
             );

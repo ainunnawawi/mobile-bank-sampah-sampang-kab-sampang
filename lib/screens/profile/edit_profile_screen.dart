@@ -45,9 +45,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final noHp = _noTelpController.text.trim();
     final alamat = _alamatController.text.trim();
 
-    if (nama.isEmpty || noHp.isEmpty || alamat.isEmpty) {
+    if (nama.isEmpty || noHp.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua field wajib diisi!'), backgroundColor: Colors.orange),
+        const SnackBar(content: Text('Nama dan Nomor Telepon wajib diisi!'), backgroundColor: Colors.orange),
       );
       return;
     }
@@ -71,7 +71,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       if (result['success']) {
-        Navigator.pop(context, true);
+        Navigator.pop(context, true); // Kirim sinyal true agar layar Profile refresh data
       }
     }
   }
@@ -109,7 +109,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               ),
               child: _isLoading
-                  ? const CircularProgressIndicator(color: Colors.white)
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
                   : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ],

@@ -5,10 +5,11 @@ import '../../models/nasabah_model.dart';
 import '../profile/profile_screen.dart';
 import '../penarikan/penarikan_screen.dart';
 import '../setoran/setoran_screen.dart';
+import '../setoran/ajukan_setoran_screen.dart';
 import '../ranking/ranking_screen.dart';
 import '../saldo/saldo_mutasi_screen.dart';
-import '../penarikan/ewallet_screen.dart';
 import '../notification/notification_screen.dart';
+
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -158,23 +159,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
                     const SizedBox(height: 24),
 
-                    // 3. MENU UTAMA
+                    // 3. MENU UTAMA (Grid Clean 4 Tombol)
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
                         _buildMenuIconButton(
-                          icon: Icons.delete_outline_rounded,
-                          label: 'Setoran',
+                          icon: Icons.recycling_rounded,
+                          label: 'Setor Sampah',
                           bgColor: const Color(0xFFBBE5C8),
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const SetoranScreen()),
+                              MaterialPageRoute(builder: (context) => const AjukanSetoranScreen()),
                             );
                           },
                         ),
                         _buildMenuIconButton(
-                          icon: Icons.phone_android_rounded,
+                          icon: Icons.payments_rounded,
                           label: 'Tarik Saldo',
                           bgColor: AppColors.accentYellow.withOpacity(0.8),
                           onTap: () {
@@ -195,13 +196,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             );
                           },
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        const SizedBox(width: 12),
                         _buildMenuIconButton(
                           icon: Icons.notifications_none_rounded,
                           label: 'Notifikasi',
@@ -211,19 +205,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               context,
                               MaterialPageRoute(builder: (context) => const NotificationScreen()),
                             );
-                          }
-                        ),
-                        const SizedBox(width: 32),
-                        _buildMenuIconButton(
-                          icon: Icons.account_balance_wallet_outlined,
-                          label: 'E-Wallet',
-                          bgColor: const Color(0xFFE2F0D9),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(builder: (context) => const EwalletScreen()),
-                            );
-                          }
+                          },
                         ),
                       ],
                     ),
@@ -352,34 +334,44 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
       ),
 
-      // 6. BOTTOM NAVIGATION BAR
+      // 6. BOTTOM NAVIGATION BAR (Navigasi Aktif)
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _currentIndex,
-        onTap: (index) {
+        onTap: (index) async {
+          if (index == _currentIndex) return;
+
           setState(() {
             _currentIndex = index;
           });
 
+          // Routing Layar Navigasi Bawah
           if (index == 1) {
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const PenarikanScreen()),
             );
           } else if (index == 2) {
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const SetoranScreen()),
             );
           } else if (index == 3) {
-            Navigator.push(
+            await Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const RankingScreen()),
             );
-          }else if (index == 4) {
-            Navigator.push(
+          } else if (index == 4) {
+            await Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
+              MaterialPageRoute(builder: (context) => const ProfileScreen()),
             );
+          }
+
+          // Otomatis reset highlight kembali ke Beranda setelah menutup layar tujuan
+          if (mounted) {
+            setState(() {
+              _currentIndex = 0;
+            });
           }
         },
         type: BottomNavigationBarType.fixed,

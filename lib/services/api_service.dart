@@ -105,7 +105,157 @@ class ApiService {
     }
   }
 
-  // 3. API PROFIL NASABAH ME
+  // 3. API Kirim Link Email Verifikasi
+  static Future<Map<String, dynamic>> kirimVerifikasiEmail({
+    required String nama,
+    required String email,
+    required String noHp,
+  }) async {
+    // SIMULASI SEMENTARA (Hapus jika API backend Laravel sudah dibuat)
+    await Future.delayed(const Duration(seconds: 1));
+    return {
+      'success': true,
+      'message': 'Email verifikasi berhasil dikirim (Simulasi)',
+    };
+  //   try {
+  //     final response = await http.post(
+  //       Uri.parse('$baseUrl/register/kirim-verifikasi'),
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //         'Accept': 'application/json',
+  //       },
+  //       body: jsonEncode({
+  //         'nama': nama,
+  //         'email': email,
+  //         'no_hp': noHp,
+  //       }),
+  //     );
+
+  //     final data = jsonDecode(response.body);
+
+  //     if (response.statusCode == 200 || response.statusCode == 201) {
+  //       return {
+  //         'success': true,
+  //         'message': data['message'] ?? 'Email verifikasi berhasil dikirim',
+  //       };
+  //     } else {
+  //       return {
+  //         'success': false,
+  //         'message': data['message'] ?? 'Gagal mengirim verifikasi',
+  //       };
+  //     }
+  //   } catch (e) {
+  //     return {
+  //       'success': false,
+  //       'message': 'Terjadi kesalahan koneksi: $e',
+  //     };
+  //   }
+  }
+
+  // 4. API Simpan Password Baru (Registrasi Selesai)
+  static Future<Map<String, dynamic>> setPasswordRegister({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    // SIMULASI SEMENTARA (Kembalikan ke http.post jika rute Laravel sudah dibuat)
+    await Future.delayed(const Duration(seconds: 1));
+    return {
+      'success': true,
+      'message': 'Password berhasil disimpan (Simulasi)',
+    };
+    // try {
+    //   final response = await http.post(
+    //     Uri.parse('$baseUrl/register/set-password'),
+    //     headers: {
+    //       'Content-Type': 'application/json',
+    //       'Accept': 'application/json',
+    //     },
+    //     body: jsonEncode({
+    //       'email': email,
+    //       'token': token,
+    //       'password': password,
+    //       'password_confirmation': passwordConfirmation,
+    //     }),
+    //   );
+
+    //   final data = jsonDecode(response.body);
+
+    //   if (response.statusCode == 200 || response.statusCode == 201) {
+    //     return {
+    //       'success': true,
+    //       'message': data['message'] ?? 'Password berhasil dibuat',
+    //     };
+    //   } else {
+    //     return {
+    //       'success': false,
+    //       'message': data['message'] ?? 'Gagal menyimpan password',
+    //     };
+    //   }
+    // } catch (e) {
+    //   return {
+    //     'success': false,
+    //     'message': 'Terjadi kesalahan koneksi: $e',
+    //   };
+    // }
+  }
+
+  // 5.Kirim email penanganan lupa password
+  static Future<Map<String, dynamic>> kirimResetPasswordEmail({required String email}) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/password/email'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({'email': email}),
+      );
+
+      final data = jsonDecode(response.body);
+      return {
+        'success': response.statusCode == 200 || response.statusCode == 201,
+        'message': data['message'] ?? 'Link reset password berhasil dikirim',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Kesalahan koneksi: $e'};
+    }
+  }
+
+  // 6.Submit simpan password baru
+  static Future<Map<String, dynamic>> submitPasswordBaru({
+    required String email,
+    required String token,
+    required String password,
+    required String passwordConfirmation,
+  }) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$baseUrl/password/reset'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: jsonEncode({
+          'email': email,
+          'token': token,
+          'password': password,
+          'password_confirmation': passwordConfirmation,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      return {
+        'success': response.statusCode == 200 || response.statusCode == 201,
+        'message': data['message'] ?? 'Password berhasil diperbarui',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Kesalahan koneksi: $e'};
+    }
+  }
+
+  // 7. API PROFIL NASABAH ME
   static Future<NasabahModel?> getNasabahProfile() async {
     try {
       final token = await getToken();
@@ -128,7 +278,7 @@ class ApiService {
     }
   }
 
-  // 5. API RIWAYAT SETORAN
+  // 8. API RIWAYAT SETORAN
   static Future<List<SetoranModel>> getRiwayatSetoran() async {
     try {
       final token = await getToken();
@@ -152,7 +302,7 @@ class ApiService {
     }
   }
 
-  // 4. API PENARIKAN SALDO
+  // 9. API PENARIKAN SALDO
   static Future<Map<String, dynamic>> ajukanPenarikan({
     required double nominal,
     required String metodePenarikan, // 'tunai' atau 'transfer'
@@ -187,7 +337,7 @@ class ApiService {
     }
   }
 
-  // 5. API LOGOUT
+  // 10. API LOGOUT
   static Future<bool> logout() async {
     try {
       final token = await getToken();
@@ -207,7 +357,7 @@ class ApiService {
     }
   }
 
-  // 6. API GET PENCAPAIAN / RANKING
+  // 11. API GET PENCAPAIAN / RANKING
   static Future<List<dynamic>> getPencapaian() async {
     try {
       final token = await getToken();
@@ -312,16 +462,16 @@ class ApiService {
     }
   }
 
-  // 7. API UPDATE PROFIL NASABAH
-  static Future <Map<String, dynamic>> updateProfile({
+  // 12. API UPDATE PROFIL NASABAH
+  static Future<Map<String, dynamic>> updateProfile({
     required String nama,
     required String noHp,
-    required String alamat,
+    String? alamat,
   }) async {
     try {
       final token = await getToken();
       final response = await http.put(
-        Uri.parse('$baseUrl/nasabah/update'),
+        Uri.parse('$baseUrl/nasabah/update'), // sesuaikan rute backend Laravel
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -335,14 +485,75 @@ class ApiService {
       );
 
       final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200) {
-        return {'success': true, 'message': data['message'] ?? 'Profil berhasil diperbarui'};
-      } else {
-        return {'success': false, 'message': data['message'] ?? 'Gagal memperbarui profil'};
-      }
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Profil berhasil diperbarui',
+      };
     } catch (e) {
-      return {'success': false, 'message': 'Terjadi kesalahan koneksi server: $e'};
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
+    }
+  }
+
+  // 13. API Ubah Password saat Login
+  static Future<Map<String, dynamic>> ubahPasswordProfile({
+    required String passwordLama,
+    required String passwordBaru,
+    required String konfirmasiPassword,
+  }) async {
+    try {
+      final token = await getToken();
+      final response = await http.post(
+        Uri.parse('$baseUrl/password/change'), // sesuaikan rute backend Laravel
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'current_password': passwordLama,
+          'new_password': passwordBaru,
+          'new_password_confirmation': konfirmasiPassword,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      return {
+        'success': response.statusCode == 200,
+        'message': data['message'] ?? 'Password berhasil diubah',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
+    }
+  }
+
+  static Future<Map<String, dynamic>> ajukanSetoran({
+    required String jenisSampah,
+    required double estimasiBerat,
+    String? catatan,
+  }) async {
+    try {
+      final token = await getToken();
+      final response = await http.post(
+        Uri.parse('$baseUrl/setoran/ajukan'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'jenis_sampah': jenisSampah,
+          'estimasi_berat': estimasiBerat,
+          'catatan': catatan,
+        }),
+      );
+
+      final data = jsonDecode(response.body);
+      return {
+        'success': response.statusCode == 200 || response.statusCode == 201,
+        'message': data['message'] ?? 'Pengajuan setoran berhasil dikirim',
+      };
+    } catch (e) {
+      return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
     }
   }
 }
