@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../utils/app_colors.dart';
 import '../../services/api_service.dart';
+import '../dashboard/dashboard_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String namaAwal;
   final String noTelpAwal;
   final String alamatAwal;
+  final String emailAwal;
 
   const EditProfileScreen({
     super.key,
     required this.namaAwal,
     required this.noTelpAwal,
     this.alamatAwal = '',
+    this.emailAwal = '',
   });
 
   @override
@@ -22,6 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _namaController;
   late TextEditingController _noTelpController;
   late TextEditingController _alamatController;
+  late TextEditingController _emailController;
   bool _isLoading = false;
 
   @override
@@ -30,6 +35,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _namaController = TextEditingController(text: widget.namaAwal);
     _noTelpController = TextEditingController(text: widget.noTelpAwal);
     _alamatController = TextEditingController(text: widget.alamatAwal);
+    _emailController = TextEditingController(text: widget.emailAwal);
   }
 
   @override
@@ -37,6 +43,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _namaController.dispose();
     _noTelpController.dispose();
     _alamatController.dispose();
+    _emailController.dispose();
     super.dispose();
   }
 
@@ -44,10 +51,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final nama = _namaController.text.trim();
     final noHp = _noTelpController.text.trim();
     final alamat = _alamatController.text.trim();
+    final String newEmail = _emailController.text.trim();
+    final String oldEmail = widget.emailAwal.trim();
+    final bool isEmailChanged =
+        newEmail.isNotEmpty && newEmail.toLowerCase() != oldEmail.toLowerCase();
 
     if (nama.isEmpty || noHp.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nama dan Nomor Telepon wajib diisi!'), backgroundColor: Colors.orange),
+        const SnackBar(
+          content: Text('Nama dan Nomor Telepon wajib diisi!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (newEmail.isEmpty || !newEmail.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Masukkan alamat email yang valid!'),
+          backgroundColor: Colors.orange,
+        ),
       );
       return;
     }
@@ -57,6 +81,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final result = await ApiService.updateProfile(
       nama: nama,
       noHp: noHp,
+      email: newEmail,
       alamat: alamat,
     );
 
@@ -71,7 +96,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
       if (result['success']) {
-        Navigator.pop(context, true); // Kirim sinyal true agar layar Profile refresh data
+        if (isEmailChanged) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+            (route) => false,
+          );
+        } else {
+          Navigator.pop(context, true);
+        }
       }
     }
   }
@@ -83,7 +116,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.primarySage,
         elevation: 0,
-        title: const Text('Edit Data Diri', style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Edit Data Diri',
+          style: TextStyle(color: AppColors.textDark, fontWeight: FontWeight.bold),
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded, color: AppColors.textDark),
           onPressed: () => Navigator.pop(context),
@@ -98,6 +134,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             _buildInputField('Nama Lengkap', _namaController, 'Masukkan Nama Lengkap'),
             const SizedBox(height: 16),
             _buildInputField('Nomor Telepon', _noTelpController, 'Masukkan Nomor HP', isNumber: true),
+            const SizedBox(height: 16),
+            _buildInputField('Email', _emailController, 'Masukkan Email'),
             const SizedBox(height: 16),
             _buildInputField('Alamat Tempat Tinggal', _alamatController, 'Masukkan Alamat Lengkap', maxLines: 3),
             const SizedBox(height: 32),
@@ -114,7 +152,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       width: 20,
                       child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
                     )
-                  : const Text('Simpan Perubahan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                  : const Text(
+                      'Simpan Perubahan',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
             ),
           ],
         ),
@@ -122,7 +163,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller, String hint, {bool isNumber = false, int maxLines = 1}) {
+  Widget _buildInputField(
+    String label,
+    TextEditingController controller,
+    String hint, {
+    bool isNumber = false,
+    int maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -131,6 +178,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         TextField(
           controller: controller,
           keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
+          inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,

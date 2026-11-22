@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../utils/app_colors.dart';
 import '../../services/api_service.dart';
+import 'package:flutter/services.dart';
 
 class RegisterScreen extends StatefulWidget {
-  final String? deepLinkToken;
-  final String? deepLinkEmail;
-
-  const RegisterScreen({
-    super.key,
-    this.deepLinkToken,
-    this.deepLinkEmail,
-  });
+  const RegisterScreen({super.key});
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -18,7 +12,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final PageController _pageController = PageController();
-  int _currentStep = 0; // 0: Landing, 1: Data Diri, 2: Verifikasi Email, 3: Buat Password, 4: Selesai
   bool _isLoading = false;
 
   // Controllers Step 1 (Data Diri)
@@ -28,7 +21,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _tglLahirController = TextEditingController();
   String? _selectedGender;
 
-  // Controllers Buat Password Baru
+  // Controllers Step 2 (Buat Password)
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -40,18 +33,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _passwordController.text.contains(RegExp(r'(?=.*[A-Za-z])(?=.*\d)'));
   bool get _hasUppercase =>
       _passwordController.text.contains(RegExp(r'[A-Z]'));
-
-  @override
-  void initState() {
-    super.initState();
-    // Jika layar dibuka dari Deep Link (bawa token & email dari URL email)
-    if (widget.deepLinkToken != null && widget.deepLinkEmail != null) {
-      _emailController.text = widget.deepLinkEmail!;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _pageController.jumpToPage(3); // Direct ke Step Buat Password
-      });
-    }
-  }
 
   @override
   void dispose() {
@@ -72,45 +53,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // 1. Fungsi Kirim Email Verifikasi (Dipanggil di Step Data Diri)
-  Future<void> _handleKirimVerifikasi() async {
-    if (_namaController.text.trim().isEmpty || _emailController.text.trim().isEmpty) {
+  // Validasi Step 1 lalu langsung pindah ke Buat Password
+  void _handleLanjutBuatPassword() {
+    if (_namaController.text.trim().isEmpty ||
+        _noHpController.text.trim().isEmpty ||
+        _emailController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Nama dan Email wajib diisi!'),
+          content: Text('Nama Lengkap, No. HP, dan Email wajib diisi!'),
           backgroundColor: Colors.orange,
         ),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    // Memanggil API backend untuk kirim link email verifikasi
-    final result = await ApiService.kirimVerifikasiEmail(
-      nama: _namaController.text.trim(),
-      email: _emailController.text.trim(),
-      noHp: _noHpController.text.trim(),
-    );
-
-    setState(() => _isLoading = false);
-
-    if (result['success']) {
-      _nextPage(); // Lanjut ke Step 2 (Halaman Instruksi Cek Email)
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result['message'] ?? 'Gagal mengirim email verifikasi'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+    if (!_emailController.text.contains('@')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Format email tidak valid!'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
     }
+
+    _nextPage();
   }
 
-  // 2. Fungsi Simpan Password & Selesaikan Akun (Dipanggil di Step Password)
-  Future<void> _handleSetPassword() async {
+  // Simpan Password & Registrasi ke Backend
+  Future<void> _handleRegisterSelesai() async {
     if (_passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -143,9 +114,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await ApiService.setPasswordRegister(
+    final result = await ApiService.register(
+      nama: _namaController.text.trim(),
       email: _emailController.text.trim(),
-      token: widget.deepLinkToken ?? '',
       password: _passwordController.text,
       passwordConfirmation: _confirmPasswordController.text,
     );
@@ -153,12 +124,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      _nextPage(); // Lanjut ke Step Selesai
+      _nextPage(); // Pindah ke Step 3 (Akun Berhasil Dibuat)
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result['message'] ?? 'Gagal menyimpan password'),
+            content: Text(result['message'] ?? 'Gagal membuat akun'),
             backgroundColor: Colors.red,
           ),
         );
@@ -174,17 +145,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: PageView(
           controller: _pageController,
           physics: const NeverScrollableScrollPhysics(),
-          onPageChanged: (index) {
-            setState(() {
-              _currentStep = index;
-            });
-          },
           children: [
             _buildLandingRegister(),
             _buildStep1DataDiri(),
-            _buildStep2CekEmail(),
-            _buildStep3BuatPassword(),
-            _buildStep4Selesai(),
+            _buildStep2BuatPassword(),
+            _buildStep3Selesai(),
           ],
         ),
       ),
@@ -209,7 +174,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10)],
+              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
             ),
             child: Column(
               children: [
@@ -218,11 +183,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 const Text('Yuk Daftar dan mulai menabung Sampah Bersama SAJUANG!', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textDark, fontSize: 13)),
                 const SizedBox(height: 24),
 
-                _buildSummaryTile(Icons.person_outline, 'Isi Data Diri & Email'),
-                const SizedBox(height: 12),
-                _buildSummaryTile(Icons.mark_email_read_outlined, 'Verifikasi Email'),
+                _buildSummaryTile(Icons.person_outline, 'Isi Data Diri'),
                 const SizedBox(height: 12),
                 _buildSummaryTile(Icons.lock_outline, 'Buat Password Akun'),
+                const SizedBox(height: 12),
+                _buildSummaryTile(Icons.check_circle_outline, 'Akun Siap Digunakan'),
 
                 const SizedBox(height: 30),
 
@@ -267,14 +232,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildStepperHeader(1, 'Data Diri', 'Lengkapi Data Diri & Email Anda'),
+          _buildStepperHeader(1, 'Data Diri', 'Lengkapi Data Diri Anda'),
           const SizedBox(height: 24),
 
           _buildInputField('Nama Lengkap', _namaController, 'Masukkan Nama Lengkap'),
           const SizedBox(height: 16),
-          _buildInputField('No. HP', _noHpController, '08...'),
+          _buildInputField('No. HP', _noHpController, '08...', isNumber: true),
           const SizedBox(height: 16),
-          _buildInputField('Email Verifikasi', _emailController, 'contoh@gmail.com'),
+          _buildInputField('Email', _emailController, 'contoh@gmail.com'),
           const SizedBox(height: 16),
 
           const Text('Tanggal Lahir', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
@@ -300,81 +265,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const Text('Jenis Kelamin', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
-            value: _selectedGender,
-            decoration: _inputDecoration('pilih jenis kelamin'),
+            initialValue: _selectedGender,
+            decoration: _inputDecoration('Pilih jenis kelamin'),
             items: ['Laki-laki', 'Perempuan'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: (val) => setState(() => _selectedGender = val),
           ),
 
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: _isLoading ? null : _handleKirimVerifikasi,
+            onPressed: _handleLanjutBuatPassword,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primarySage,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             ),
-            child: _isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Kirim Kode Verifikasi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // --- 2. STEP 2: CEK EMAIL (INSTRUKSI VERIFIKASI) ---
-  Widget _buildStep2CekEmail() {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildStepperHeader(2, 'Verifikasi Email', ''),
-          const Spacer(),
-
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              color: AppColors.primarySage.withOpacity(0.2),
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.mark_email_read_rounded, size: 70, color: AppColors.primarySage),
-          ),
-          const SizedBox(height: 24),
-
-          const Text(
-            'Cek Email Anda',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            'Kami telah mengirimkan link verifikasi ke email:\n${_emailController.text}',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.textDark, height: 1.4),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Silakan klik link di email Anda untuk melanjutkan pembuatan password akun.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.black45, fontSize: 13),
-          ),
-
-          const Spacer(),
-
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: () {
-                _pageController.animateToPage(3, duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primarySage),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-              ),
-              child: const Text('Sudah Verifikasi? Lanjut', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primarySage)),
+            child: const Text(
+              'Lanjut Buat Password',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
             ),
           ),
         ],
@@ -382,14 +289,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // --- 3. STEP 3: INFORMASI AKUN (BUAT PASSWORD DINAMIS) ---
-  Widget _buildStep3BuatPassword() {
+  // --- 2. STEP 2: BUAT PASSWORD ---
+  Widget _buildStep2BuatPassword() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildStepperHeader(3, 'Buat Password', 'Buat Password Akun Baru Anda'),
+          _buildStepperHeader(2, 'Buat Password', 'Buat Password Akun Baru Anda'),
           const SizedBox(height: 24),
 
           const Text('Password', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
@@ -397,9 +304,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           TextField(
             controller: _passwordController,
             obscureText: !_isPasswordVisible,
-            onChanged: (val) {
-              setState(() {}); // Refresh otomatis saat mengetik untuk mengecek syarat password
-            },
+            onChanged: (val) => setState(() {}),
             decoration: _inputDecoration(
               'Minimal 8 karakter',
               suffixIcon: IconButton(
@@ -425,11 +330,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 24),
 
-          // Box Kriteria Password (Dinamis Real-time)
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.primarySage.withOpacity(0.15),
+              color: AppColors.primarySage.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(15),
             ),
             child: Column(
@@ -448,7 +352,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           const SizedBox(height: 32),
           ElevatedButton(
-            onPressed: _isLoading ? null : _handleSetPassword,
+            onPressed: _isLoading ? null : _handleRegisterSelesai,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primarySage,
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -456,31 +360,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             child: _isLoading
                 ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Simpan & Selesaikan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                : const Text('Simpan & Selesaikan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  // --- 4. STEP 4: SELESAI ---
-  Widget _buildStep4Selesai() {
+  // --- 3. STEP 3: SELESAI ---
+  Widget _buildStep3Selesai() {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          _buildStepperHeader(4, 'Selesai', ''),
+          _buildStepperHeader(3, 'Selesai', ''),
           const Spacer(),
 
           Container(
             width: 150,
             height: 150,
             decoration: BoxDecoration(
-              color: AppColors.primarySage.withOpacity(0.2),
+              color: AppColors.primarySage.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.emoji_nature_rounded, size: 90, color: AppColors.primarySage),
+            child: const Icon(Icons.check_circle_rounded, size: 100, color: AppColors.primarySage),
           ),
           const SizedBox(height: 24),
 
@@ -490,7 +394,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Selamat bergabung di Bank Sampah SAJUANG! Yuk mulai menabung sampah untuk lingkungan yang lebih bersih!',
+            'Selamat bergabung di Bank Sampah SAJUANG! Silakan masuk untuk memverifikasi email dan mulai menabung sampah.',
             textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textDark, height: 1.4),
           ),
@@ -506,7 +410,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               ),
-              child: const Text('Mulai Masuk', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text('Mulai Masuk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
             ),
           ),
         ],
@@ -519,7 +423,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.primarySage.withOpacity(0.15),
+        color: AppColors.primarySage.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -543,8 +447,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _buildCircleStep(2, activeStep >= 2),
             _buildLineStep(activeStep >= 3),
             _buildCircleStep(3, activeStep >= 3),
-            _buildLineStep(activeStep >= 4),
-            _buildCircleStep(4, activeStep >= 4),
           ],
         ),
         const SizedBox(height: 12),
@@ -583,13 +485,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildLineStep(bool isActive) {
     return Container(
-      width: 40,
+      width: 55,
       height: 2,
       color: isActive ? AppColors.primarySage : Colors.grey.shade300,
     );
   }
 
-  Widget _buildInputField(String label, TextEditingController controller, String hint) {
+  Widget _buildInputField(
+    String label,
+    TextEditingController controller,
+    String hint, {
+    bool isNumber = false,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -597,6 +504,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
         const SizedBox(height: 6),
         TextField(
           controller: controller,
+          keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
+          inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
           decoration: _inputDecoration(hint),
         ),
       ],
@@ -607,7 +516,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return InputDecoration(
       hintText: hint,
       filled: true,
-      fillColor: AppColors.primarySage.withOpacity(0.15),
+      fillColor: AppColors.primarySage.withValues(alpha: 0.15),
       suffixIcon: suffixIcon,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
@@ -617,7 +526,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Helper Widget Item Syarat Password (Hijau/Merah Dinamis)
   Widget _buildCheckItem(String text, bool isValid) {
     return Row(
       children: [

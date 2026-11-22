@@ -26,7 +26,7 @@ class _SaldoMutasiScreenState extends State<SaldoMutasiScreen> {
     setState(() {
       _profileFuture = ApiService.getNasabahProfile();
       _setoranFuture = ApiService.getRiwayatSetoran();
-      _penarikanFuture = ApiService.getRiwayatPenarikan();
+      _penarikanFuture = ApiService.getPenarikan();
     });
   }
 
