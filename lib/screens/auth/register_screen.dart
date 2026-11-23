@@ -31,8 +31,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool get _isMinLength => _passwordController.text.length >= 8;
   bool get _hasLetterAndNumber =>
       _passwordController.text.contains(RegExp(r'(?=.*[A-Za-z])(?=.*\d)'));
-  bool get _hasUppercase =>
-      _passwordController.text.contains(RegExp(r'[A-Z]'));
+  bool get _hasUppercase => _passwordController.text.contains(RegExp(r'[A-Z]'));
 
   @override
   void dispose() {
@@ -82,7 +81,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // Simpan Password & Registrasi ke Backend
   Future<void> _handleRegisterSelesai() async {
-    if (_passwordController.text.isEmpty || _confirmPasswordController.text.isEmpty) {
+    if (_passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Harap isi password dan konfirmasi password!'),
@@ -117,6 +117,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final result = await ApiService.register(
       nama: _namaController.text.trim(),
       email: _emailController.text.trim(),
+      noHp: _noHpController.text.trim(),
       password: _passwordController.text,
       passwordConfirmation: _confirmPasswordController.text,
     );
@@ -165,8 +166,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const SizedBox(height: 20),
           const Icon(Icons.recycling, size: 60, color: AppColors.primarySage),
           const SizedBox(height: 8),
-          const Text('SAJUANG', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: AppColors.textDark)),
-          const Text('Sampah Jadi Uang', style: TextStyle(color: AppColors.textDark)),
+          const Text(
+            'SAJUANG',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
+          ),
+          const Text(
+            'Sampah Jadi Uang',
+            style: TextStyle(color: AppColors.textDark),
+          ),
           const SizedBox(height: 40),
 
           Container(
@@ -174,20 +185,39 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 10)],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.05),
+                  blurRadius: 10,
+                ),
+              ],
             ),
             child: Column(
               children: [
-                const Text('Buat Akun Baru', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                const Text(
+                  'Buat Akun Baru',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
                 const SizedBox(height: 8),
-                const Text('Yuk Daftar dan mulai menabung Sampah Bersama SAJUANG!', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textDark, fontSize: 13)),
+                const Text(
+                  'Yuk Daftar dan mulai menabung Sampah Bersama SAJUANG!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: AppColors.textDark, fontSize: 13),
+                ),
                 const SizedBox(height: 24),
 
                 _buildSummaryTile(Icons.person_outline, 'Isi Data Diri'),
                 const SizedBox(height: 12),
                 _buildSummaryTile(Icons.lock_outline, 'Buat Password Akun'),
                 const SizedBox(height: 12),
-                _buildSummaryTile(Icons.check_circle_outline, 'Akun Siap Digunakan'),
+                _buildSummaryTile(
+                  Icons.check_circle_outline,
+                  'Akun Siap Digunakan',
+                ),
 
                 const SizedBox(height: 30),
 
@@ -197,10 +227,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     onPressed: _nextPage,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primarySage,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
-                    child: const Text('Mulai Daftar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                    child: const Text(
+                      'Mulai Daftar',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -210,12 +249,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Text('Sudah punya akun? ', style: TextStyle(color: AppColors.textDark)),
+              const Text(
+                'Sudah punya akun? ',
+                style: TextStyle(color: AppColors.textDark),
+              ),
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: const Text(
                   'Login disini',
-                  style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.green,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -235,14 +280,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
           _buildStepperHeader(1, 'Data Diri', 'Lengkapi Data Diri Anda'),
           const SizedBox(height: 24),
 
-          _buildInputField('Nama Lengkap', _namaController, 'Masukkan Nama Lengkap'),
+          _buildInputField(
+            'Nama Lengkap',
+            _namaController,
+            'Masukkan Nama Lengkap',
+          ),
           const SizedBox(height: 16),
           _buildInputField('No. HP', _noHpController, '08...', isNumber: true),
           const SizedBox(height: 16),
           _buildInputField('Email', _emailController, 'contoh@gmail.com'),
           const SizedBox(height: 16),
 
-          const Text('Tanggal Lahir', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          const Text(
+            'Tanggal Lahir',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: _tglLahirController,
@@ -255,19 +310,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 lastDate: DateTime.now(),
               );
               if (picked != null) {
-                _tglLahirController.text = "${picked.day}/${picked.month}/${picked.year}";
+                _tglLahirController.text =
+                    "${picked.day}/${picked.month}/${picked.year}";
               }
             },
-            decoration: _inputDecoration('Pilih tanggal Lahir', suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20)),
+            decoration: _inputDecoration(
+              'Pilih tanggal Lahir',
+              suffixIcon: const Icon(Icons.calendar_today_outlined, size: 20),
+            ),
           ),
           const SizedBox(height: 16),
 
-          const Text('Jenis Kelamin', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          const Text(
+            'Jenis Kelamin',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
             initialValue: _selectedGender,
             decoration: _inputDecoration('Pilih jenis kelamin'),
-            items: ['Laki-laki', 'Perempuan'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            items: [
+              'Laki-laki',
+              'Perempuan',
+            ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: (val) => setState(() => _selectedGender = val),
           ),
 
@@ -277,11 +345,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primarySage,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
             ),
             child: const Text(
               'Lanjut Buat Password',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
           ),
         ],
@@ -296,10 +370,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _buildStepperHeader(2, 'Buat Password', 'Buat Password Akun Baru Anda'),
+          _buildStepperHeader(
+            2,
+            'Buat Password',
+            'Buat Password Akun Baru Anda',
+          ),
           const SizedBox(height: 24),
 
-          const Text('Password', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          const Text(
+            'Password',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: _passwordController,
@@ -308,14 +392,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: _inputDecoration(
               'Minimal 8 karakter',
               suffixIcon: IconButton(
-                icon: Icon(_isPasswordVisible ? Icons.visibility : Icons.visibility_off),
-                onPressed: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                icon: Icon(
+                  _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () =>
+                    setState(() => _isPasswordVisible = !_isPasswordVisible),
               ),
             ),
           ),
           const SizedBox(height: 16),
 
-          const Text('Konfirmasi Password', style: TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          const Text(
+            'Konfirmasi Password',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
           const SizedBox(height: 6),
           TextField(
             controller: _confirmPasswordController,
@@ -323,8 +416,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
             decoration: _inputDecoration(
               'Masukkan Kembali Password',
               suffixIcon: IconButton(
-                icon: Icon(_isConfirmVisible ? Icons.visibility : Icons.visibility_off),
-                onPressed: () => setState(() => _isConfirmVisible = !_isConfirmVisible),
+                icon: Icon(
+                  _isConfirmVisible ? Icons.visibility : Icons.visibility_off,
+                ),
+                onPressed: () =>
+                    setState(() => _isConfirmVisible = !_isConfirmVisible),
               ),
             ),
           ),
@@ -339,7 +435,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Password harus mengandung:', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textDark)),
+                const Text(
+                  'Password harus mengandung:',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textDark,
+                  ),
+                ),
                 const SizedBox(height: 10),
                 _buildCheckItem('Minimal 8 karakter', _isMinLength),
                 const SizedBox(height: 6),
@@ -356,11 +458,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primarySage,
               padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
             ),
             child: _isLoading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                : const Text('Simpan & Selesaikan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      color: Colors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : const Text(
+                    'Simpan & Selesaikan',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -384,13 +502,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
               color: AppColors.primarySage.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.check_circle_rounded, size: 100, color: AppColors.primarySage),
+            child: const Icon(
+              Icons.check_circle_rounded,
+              size: 100,
+              color: AppColors.primarySage,
+            ),
           ),
           const SizedBox(height: 24),
 
           const Text(
             'Akun Berhasil Dibuat',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textDark),
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+              color: AppColors.textDark,
+            ),
           ),
           const SizedBox(height: 12),
           const Text(
@@ -408,9 +534,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primarySage,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
-              child: const Text('Mulai Masuk', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text(
+                'Mulai Masuk',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
@@ -430,13 +565,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
         children: [
           Icon(icon, color: AppColors.textDark),
           const SizedBox(width: 12),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+          Text(
+            title,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildStepperHeader(int activeStep, String stepTitle, String subtitle) {
+  Widget _buildStepperHeader(
+    int activeStep,
+    String stepTitle,
+    String subtitle,
+  ) {
     return Column(
       children: [
         Row(
@@ -464,7 +609,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             subtitle,
             style: const TextStyle(fontSize: 14, color: AppColors.textDark),
           ),
-        ]
+        ],
       ],
     );
   }
@@ -478,7 +623,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
         shape: BoxShape.circle,
       ),
       child: Center(
-        child: Text('$step', style: TextStyle(color: isActive ? Colors.white : Colors.black54, fontWeight: FontWeight.bold)),
+        child: Text(
+          '$step',
+          style: TextStyle(
+            color: isActive ? Colors.white : Colors.black54,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
       ),
     );
   }
@@ -500,12 +651,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textDark)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: AppColors.textDark,
+          ),
+        ),
         const SizedBox(height: 6),
         TextField(
           controller: controller,
           keyboardType: isNumber ? TextInputType.phone : TextInputType.text,
-          inputFormatters: isNumber ? [FilteringTextInputFormatter.digitsOnly] : null,
+          inputFormatters: isNumber
+              ? [FilteringTextInputFormatter.digitsOnly]
+              : null,
           decoration: _inputDecoration(hint),
         ),
       ],

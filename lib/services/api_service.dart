@@ -65,11 +65,16 @@ class ApiService {
       } else {
         return {
           'success': false,
-          'message': data['message'] ?? 'Login gagal. Periksa kembali email dan password.'
+          'message':
+              data['message'] ??
+              'Login gagal. Periksa kembali email dan password.',
         };
       }
     } catch (e) {
-      return {'success': false, 'message': 'Terjadi kesalahan koneksi server: $e'};
+      return {
+        'success': false,
+        'message': 'Terjadi kesalahan koneksi server: $e',
+      };
     }
   }
 
@@ -126,92 +131,10 @@ class ApiService {
     }
   }
 
-  // 3. API Kirim Link Email Verifikasi (Legacy)
-  static Future<Map<String, dynamic>> kirimVerifikasiEmail({
-    required String nama,
-    required String email,
-    required String noHp,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/register/kirim-verifikasi'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'nama': nama,
-          'email': email,
-          'no_hp': noHp,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'message': data['message'] ?? 'Link verifikasi telah dikirim ke email Anda.',
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Gagal mengirim verifikasi',
-        };
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan koneksi: $e',
-      };
-    }
-  }
-
-  // 4. API Simpan Password Baru (Legacy)
-  static Future<Map<String, dynamic>> setPasswordRegister({
-    required String email,
-    required String token,
-    required String password,
-    required String passwordConfirmation,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$baseUrl/register/set-password'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'token': token,
-          'password': password,
-          'password_confirmation': passwordConfirmation,
-        }),
-      );
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return {
-          'success': true,
-          'message': data['message'] ?? 'Password berhasil dibuat, akun aktif.',
-        };
-      } else {
-        return {
-          'success': false,
-          'message': data['message'] ?? 'Gagal menyimpan password',
-        };
-      }
-    } catch (e) {
-      return {
-        'success': false,
-        'message': 'Terjadi kesalahan koneksi: $e',
-      };
-    }
-  }
-
   // 5. Kirim email penanganan lupa password
-  static Future<Map<String, dynamic>> kirimResetPasswordEmail({required String email}) async {
+  static Future<Map<String, dynamic>> kirimResetPasswordEmail({
+    required String email,
+  }) async {
     try {
       final response = await http.post(
         Uri.parse('$baseUrl/forgot-password'),
@@ -337,9 +260,15 @@ class ApiService {
 
       final data = jsonDecode(response.body);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        return {'success': true, 'message': data['message'] ?? 'Pengajuan penarikan berhasil dikirim.'};
+        return {
+          'success': true,
+          'message': data['message'] ?? 'Pengajuan penarikan berhasil dikirim.',
+        };
       } else {
-        return {'success': false, 'message': data['message'] ?? 'Gagal mengajukan penarikan.'};
+        return {
+          'success': false,
+          'message': data['message'] ?? 'Gagal mengajukan penarikan.',
+        };
       }
     } catch (e) {
       return {'success': false, 'message': 'Terjadi kesalahan jaringan.'};
@@ -538,7 +467,9 @@ class ApiService {
   }
 
   // 16. API BATALKAN PENARIKAN (Hanya saat status menunggu)
-  static Future<Map<String, dynamic>> batalkanPenarikan({required int idPenarikan}) async {
+  static Future<Map<String, dynamic>> batalkanPenarikan({
+    required int idPenarikan,
+  }) async {
     try {
       final token = await getToken();
       final response = await http.post(
@@ -552,7 +483,8 @@ class ApiService {
       final data = jsonDecode(response.body);
       return {
         'success': response.statusCode == 200,
-        'message': data['message'] ?? 'Pengajuan penarikan berhasil dibatalkan.',
+        'message':
+            data['message'] ?? 'Pengajuan penarikan berhasil dibatalkan.',
       };
     } catch (e) {
       return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
@@ -574,7 +506,8 @@ class ApiService {
       final data = jsonDecode(response.body);
       return {
         'success': response.statusCode == 200,
-        'message': data['message'] ?? 'Link verifikasi telah dikirim ke email Anda.',
+        'message':
+            data['message'] ?? 'Link verifikasi telah dikirim ke email Anda.',
       };
     } catch (e) {
       return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
@@ -593,10 +526,7 @@ class ApiService {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: jsonEncode({
-          'email': email,
-          'token': token,
-        }),
+        body: jsonEncode({'email': email, 'token': token}),
       );
 
       final data = jsonDecode(response.body);
@@ -625,11 +555,7 @@ class ApiService {
 
       final bytes = await foto.readAsBytes();
       request.files.add(
-        http.MultipartFile.fromBytes(
-          'foto_profil',
-          bytes,
-          filename: foto.name,
-        ),
+        http.MultipartFile.fromBytes('foto_profil', bytes, filename: foto.name),
       );
 
       final streamedResponse = await request.send();

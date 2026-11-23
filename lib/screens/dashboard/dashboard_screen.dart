@@ -40,7 +40,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
   }
 
-
   Future<void> _kirimLinkVerifikasi() async {
     setState(() => _isSendingVerif = true);
     final result = await ApiService.kirimLinkVerifikasiDashboard();
@@ -72,11 +71,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return FutureBuilder<NasabahModel?>(
       future: _profileFuture,
       builder: (context, snapshot) {
-        final bool isLoading = snapshot.connectionState == ConnectionState.waiting;
+        final bool isLoading =
+            snapshot.connectionState == ConnectionState.waiting;
         final nasabah = snapshot.data;
-        const bool bypassVerifSementara = true; // Ubah ke false setelah tim web deploy!
-        final bool isUnverified = !bypassVerifSementara && !isLoading && nasabah != null && !nasabah.isVerified;
-        // final bool isUnverified = !isLoading && nasabah != null && !nasabah.isVerified;
+        const bool bypassVerifSementara =
+            false; // Ubah ke false setelah tim web deploy!
+        final bool isUnverified =
+            !bypassVerifSementara &&
+            !isLoading &&
+            nasabah != null &&
+            !nasabah.isVerified;
+        // final bool isUnverified =
+        //     !isLoading && nasabah != null && !nasabah.isVerified;
 
         return Stack(
           children: [
@@ -88,7 +94,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 body: SafeArea(
                   child: isLoading
                       ? const Center(
-                          child: CircularProgressIndicator(color: AppColors.primarySage),
+                          child: CircularProgressIndicator(
+                            color: AppColors.primarySage,
+                          ),
                         )
                       : RefreshIndicator(
                           onRefresh: () async => _refreshData(),
@@ -103,7 +111,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             if (isUnverified)
               Positioned.fill(
                 child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 7.0, sigmaY: 7.0),
+                  filter: ImageFilter.blur(sigmaX: 0, sigmaY: 0),
                   child: Container(
                     color: Colors.black.withValues(alpha: 0.35),
                     alignment: Alignment.center,
@@ -120,7 +128,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppColors.primarySage.withValues(alpha: 0.2),
+                                color: AppColors.primarySage.withValues(
+                                  alpha: 0.2,
+                                ),
                                 shape: BoxShape.circle,
                               ),
                               child: const Icon(
@@ -153,16 +163,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton.icon(
-                                onPressed: _isSendingVerif ? null : _kirimLinkVerifikasi,
+                                onPressed: _isSendingVerif
+                                    ? null
+                                    : _kirimLinkVerifikasi,
                                 icon: _isSendingVerif
                                     ? const SizedBox(
                                         width: 18,
                                         height: 18,
-                                        child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
                                       )
-                                    : const Icon(Icons.send_rounded, color: Colors.white, size: 18),
+                                    : const Icon(
+                                        Icons.send_rounded,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
                                 label: Text(
-                                  _isSendingVerif ? 'Mengirim...' : 'Kirim Link Verifikasi',
+                                  _isSendingVerif
+                                      ? 'Mengirim...'
+                                      : 'Kirim Link Verifikasi',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.white,
@@ -171,7 +192,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 ),
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppColors.primarySage,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -184,8 +207,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               child: OutlinedButton(
                                 onPressed: _refreshData,
                                 style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: AppColors.primarySage),
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  side: const BorderSide(
+                                    color: AppColors.primarySage,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(14),
                                   ),
@@ -205,7 +232,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               onPressed: _handleLogout,
                               child: const Text(
                                 'Keluar / Ganti Akun',
-                                style: TextStyle(color: Colors.red, fontSize: 13),
+                                style: TextStyle(
+                                  color: Colors.red,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ],
@@ -257,10 +287,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
           // CARD SALDO SAKU (Dengan Tombol Suara Aksesibilitas)
           GestureDetector(
             onTap: () {
-              AppSettings.speak('Saldo saku Anda saat ini sebesar $saldoFormatted');
+              AppSettings.speak(
+                'Saldo saku Anda saat ini sebesar $saldoFormatted',
+              );
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const SaldoMutasiScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const SaldoMutasiScreen(),
+                ),
               );
             },
             child: Container(
@@ -352,7 +386,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const AjukanSetoranScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const AjukanSetoranScreen(),
+                    ),
                   );
                 },
               ),
@@ -363,7 +399,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const PenarikanScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const PenarikanScreen(),
+                    ),
                   );
                 },
               ),
@@ -374,7 +412,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SaldoMutasiScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const SaldoMutasiScreen(),
+                    ),
                   );
                 },
               ),
@@ -385,7 +425,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const NotificationScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const NotificationScreen(),
+                    ),
                   );
                 },
               ),
@@ -399,7 +441,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const StatistikScreen()),
+                MaterialPageRoute(
+                  builder: (context) => const StatistikScreen(),
+                ),
               );
             },
             child: FutureBuilder<List<SetoranModel>>(
@@ -437,7 +481,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               color: AppColors.textDark,
                             ),
                           ),
-                          Icon(Icons.chevron_right_rounded, color: AppColors.textDark),
+                          Icon(
+                            Icons.chevron_right_rounded,
+                            color: AppColors.textDark,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 16),
@@ -452,7 +499,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           _buildStatItem(
                             icon: Icons.scale_outlined,
                             label: 'Total Sampah',
-                            value: '${jmlBerat.toStringAsFixed(1).replaceAll('.', ',')}Kg',
+                            value:
+                                '${jmlBerat.toStringAsFixed(1).replaceAll('.', ',')}Kg',
                           ),
                           _buildStatItem(
                             icon: Icons.insights_rounded,
@@ -491,7 +539,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     children: [
                       RichText(
                         text: const TextSpan(
-                          style: TextStyle(fontSize: 14, color: AppColors.textDark),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textDark,
+                          ),
                           children: [
                             TextSpan(text: 'Yuk jaga lingkungan\n'),
                             TextSpan(
@@ -511,10 +562,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 10),
                       const Text(
                         'sampah kecil, dampak\nbesar!',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.black54,
-                        ),
+                        style: TextStyle(fontSize: 12, color: Colors.black54),
                       ),
                     ],
                   ),
@@ -551,13 +599,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
         setState(() => _currentIndex = index);
 
         if (index == 1) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const PenarikanScreen()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PenarikanScreen()),
+          );
         } else if (index == 2) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const SetoranScreen()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const SetoranScreen()),
+          );
         } else if (index == 3) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const RankingScreen()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const RankingScreen()),
+          );
         } else if (index == 4) {
-          await Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const ProfileScreen()),
+          );
         }
 
         if (mounted) {
@@ -568,14 +628,37 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: const Color(0xFFF0F6F1),
       selectedItemColor: AppColors.textDark,
       unselectedItemColor: Colors.black45,
-      selectedLabelStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+      selectedLabelStyle: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+      ),
       unselectedLabelStyle: const TextStyle(fontSize: 11),
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.home_outlined), activeIcon: Icon(Icons.home_rounded), label: 'Beranda'),
-        BottomNavigationBarItem(icon: Icon(Icons.description_outlined), activeIcon: Icon(Icons.description_rounded), label: 'Penarikan'),
-        BottomNavigationBarItem(icon: Icon(Icons.pan_tool_outlined), activeIcon: Icon(Icons.pan_tool_rounded), label: 'Setoran'),
-        BottomNavigationBarItem(icon: Icon(Icons.military_tech_outlined), activeIcon: Icon(Icons.military_tech_rounded), label: 'Ranking'),
-        BottomNavigationBarItem(icon: Icon(Icons.person_outline_rounded), activeIcon: Icon(Icons.person_rounded), label: 'Profile'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.home_outlined),
+          activeIcon: Icon(Icons.home_rounded),
+          label: 'Beranda',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.description_outlined),
+          activeIcon: Icon(Icons.description_rounded),
+          label: 'Penarikan',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.pan_tool_outlined),
+          activeIcon: Icon(Icons.pan_tool_rounded),
+          label: 'Setoran',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.military_tech_outlined),
+          activeIcon: Icon(Icons.military_tech_rounded),
+          label: 'Ranking',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.person_outline_rounded),
+          activeIcon: Icon(Icons.person_rounded),
+          label: 'Profile',
+        ),
       ],
     );
   }
@@ -599,7 +682,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           const SizedBox(height: 6),
           Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: AppColors.textDark),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textDark,
+            ),
           ),
         ],
       ),
@@ -615,11 +702,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
       children: [
         Icon(icon, color: AppColors.primarySage, size: 28),
         const SizedBox(height: 6),
-        Text(label, style: const TextStyle(fontSize: 11, color: Colors.black54)),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, color: Colors.black54),
+        ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.textDark),
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textDark,
+          ),
         ),
       ],
     );
