@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/app_colors.dart';
+import '../../services/api_service.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -10,56 +10,35 @@ class NotificationScreen extends StatefulWidget {
 
 class _NotificationScreenState extends State<NotificationScreen> {
   String _selectedFilter = 'Semua';
+  bool _isLoading = true;
+  List<Map<String, dynamic>> _notifications = [];
 
-  // Data Notifikasi (Bisa diganti data API nantinya)
-  final List<Map<String, String>> _notifications = [
-    {
-      'judul': 'Setoran Berhasil',
-      'kode': 'set-20260901-0001',
-      'waktu': '1 sep 2026 ➔ 11:20',
-      'kategori': 'Setoran',
-      'tipe_icon': 'setoran_sukses',
-    },
-    {
-      'judul': 'Penarikan diajukan',
-      'kode': 'WID-20260901-0001',
-      'waktu': '1 sep 2026 ➔ 11:19',
-      'kategori': 'Penarikan',
-      'tipe_icon': 'penarikan_diajukan',
-    },
-    {
-      'judul': 'penarikan disetujui',
-      'kode': 'WID-20260901-0001',
-      'waktu': '1 sep 2026 ➔ 11:19',
-      'kategori': 'Penarikan',
-      'tipe_icon': 'penarikan_disetujui',
-    },
-    {
-      'judul': 'Event Harga Spesial',
-      'kode': 'Hari kemerdekaan',
-      'waktu': '17 agus 2026',
-      'kategori': 'Event',
-      'tipe_icon': 'event',
-    },
-    {
-      'judul': 'Penarikan ditolak',
-      'kode': 'WID-20260901-0001',
-      'waktu': '1 sep 2026 ➔ 11:19',
-      'kategori': 'Penarikan',
-      'tipe_icon': 'penarikan_ditolak',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    setState(() => _isLoading = true);
+    final data = await ApiService.getNotifications();
+    if (!mounted) return;
+    setState(() {
+      _notifications = data;
+      _isLoading = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Filter list berdasarkan chip yang dipilih
     final filteredList = _notifications.where((item) {
       if (_selectedFilter == 'Semua') return true;
-      return item['kategori'].toString().toLowerCase() == _selectedFilter.toLowerCase();
+      final kategori = (item['kategori'] ?? '').toString().toLowerCase();
+      return kategori == _selectedFilter.toLowerCase();
     }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFC7E5C8), // Sage background header
+      backgroundColor: const Color(0xFFC7E5C8),
       body: SafeArea(
         bottom: false,
         child: Column(
@@ -87,11 +66,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 48), // Balancing icon back
+                      const SizedBox(width: 48),
                     ],
                   ),
                   const SizedBox(height: 12),
-                  // Filter Chips (Semua, Setoran, Penarikan, Event)
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -121,20 +99,32 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     topRight: Radius.circular(24),
                   ),
                 ),
-                child: filteredList.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'Tidak ada notifikasi',
-                          style: TextStyle(color: Colors.black45),
-                        ),
-                      )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: filteredList.length,
-                        itemBuilder: (context, index) {
-                          final item = filteredList[index];
-                          return _buildNotificationCard(item);
-                        },
+                child: _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : RefreshIndicator(
+                        onRefresh: _loadNotifications,
+                        child: filteredList.isEmpty
+                            ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: const [
+                                  SizedBox(height: 120),
+                                  Center(
+                                    child: Text(
+                                      'Tidak ada notifikasi',
+                                      style: TextStyle(color: Colors.black45),
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.all(20),
+                                itemCount: filteredList.length,
+                                itemBuilder: (context, index) {
+                                  final item = filteredList[index];
+                                  return _buildNotificationCard(item);
+                                },
+                              ),
                       ),
               ),
             ),
@@ -144,7 +134,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  // Widget Filter Chip (Tombol Hijau Tua)
   Widget _buildFilterChip(String label) {
     final isSelected = _selectedFilter == label;
     return GestureDetector(
@@ -152,7 +141,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2E7D32) : const Color(0xFF4CAF50).withOpacity(0.7),
+          color: isSelected
+              ? const Color(0xFF2E7D32)
+              : const Color(0xFF4CAF50).withOpacity(0.7),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
@@ -167,8 +158,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  // Card Item Notifikasi
   Widget _buildNotificationCard(Map<String, dynamic> item) {
+    final judul = (item['judul'] ?? 'Notifikasi').toString();
+    final kode = (item['kode'] ?? '-').toString();
+    final waktu = (item['waktu'] ?? '').toString();
+    final tipeIcon = (item['tipe_icon'] ?? '').toString();
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -178,15 +173,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
       ),
       child: Row(
         children: [
-          // Custom Icon Berdasarkan Tipe Notifikasi
-          _buildNotificationIcon(item['tipe_icon']),
+          _buildNotificationIcon(tipeIcon),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  item['judul'],
+                  judul,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -195,20 +189,22 @@ class _NotificationScreenState extends State<NotificationScreen> {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  item['kode'],
+                  kode,
                   style: const TextStyle(
                     fontSize: 11,
                     color: Colors.black54,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  item['waktu'],
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Colors.black45,
+                if (waktu.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    waktu,
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Colors.black45,
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -217,7 +213,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
     );
   }
 
-  // Helper Icon Sesuai Gambar Mockup
   Widget _buildNotificationIcon(String tipe) {
     switch (tipe) {
       case 'setoran_sukses':

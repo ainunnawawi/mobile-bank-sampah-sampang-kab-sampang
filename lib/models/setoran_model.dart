@@ -24,9 +24,9 @@ class SetoranModel {
       id: json['id'] ?? 0,
       nomorTransaksi: json['nomor_transaksi'] ?? '',
       tglSetoran: json['tgl_setoran'] ?? '',
-      berat: json['berat'] ?? '0',
-      hargaPerKg: json['harga_per_kg'] ?? '0',
-      nilaiSetoran: json['nilai_setoran'] ?? '0',
+      berat: json['berat']?.toString() ?? '0',
+      hargaPerKg: json['harga_per_kg']?.toString() ?? '0',
+      nilaiSetoran: json['nilai_setoran']?.toString() ?? '0',
       status: json['status'] ?? '',
       keterangan: json['keterangan'],
     );

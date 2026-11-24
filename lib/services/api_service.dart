@@ -570,4 +570,34 @@ class ApiService {
       return {'success': false, 'message': 'Terjadi kesalahan koneksi: $e'};
     }
   }
+
+  // 20. API GET NOTIFIKASI
+  static Future<List<Map<String, dynamic>>> getNotifications() async {
+    try {
+      final token = await getToken();
+      final response = await http.get(
+        Uri.parse('$baseUrl/notifikasi'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final body = jsonDecode(response.body);
+        final List<dynamic> rawList = body is List
+            ? body
+            : (body['data'] is List ? body['data'] : []);
+
+        return rawList
+            .whereType()
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      }
+      return [];
+    } catch (e) {
+      return [];
+    }
+  }
 }

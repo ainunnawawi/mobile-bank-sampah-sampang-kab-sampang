@@ -71,18 +71,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return FutureBuilder<NasabahModel?>(
       future: _profileFuture,
       builder: (context, snapshot) {
-        final bool isLoading =
-            snapshot.connectionState == ConnectionState.waiting;
+        final bool isLoading = snapshot.connectionState == ConnectionState.waiting;
         final nasabah = snapshot.data;
-        const bool bypassVerifSementara =
-            false; // Ubah ke false setelah tim web deploy!
-        final bool isUnverified =
-            !bypassVerifSementara &&
-            !isLoading &&
-            nasabah != null &&
-            !nasabah.isVerified;
-        // final bool isUnverified =
-        //     !isLoading && nasabah != null && !nasabah.isVerified;
+        const bool bypassVerifSementara = false; // Ubah ke false setelah tim web deploy!
+        final bool isUnverified = !bypassVerifSementara && !isLoading && nasabah != null && !nasabah.isVerified;
 
         return Stack(
           children: [

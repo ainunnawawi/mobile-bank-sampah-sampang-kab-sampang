@@ -52,7 +52,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // Validasi Step 1 lalu langsung pindah ke Buat Password
   void _handleLanjutBuatPassword() {
     if (_namaController.text.trim().isEmpty ||
         _noHpController.text.trim().isEmpty ||
@@ -79,7 +78,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _nextPage();
   }
 
-  // Simpan Password & Registrasi ke Backend
   Future<void> _handleRegisterSelesai() async {
     if (_passwordController.text.isEmpty ||
         _confirmPasswordController.text.isEmpty) {
@@ -125,7 +123,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() => _isLoading = false);
 
     if (result['success']) {
-      _nextPage(); // Pindah ke Step 3 (Akun Berhasil Dibuat)
+      _nextPage();
     } else {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -136,6 +134,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
       }
     }
+  }
+
+  // Wrapper pembantu agar setiap halaman punya tinggi penuh & tombol di bagian bawah
+  Widget _buildBottomPinnedStep({required Widget child}) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight - 48.0,
+            ),
+            child: IntrinsicHeight(child: child),
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -159,15 +174,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- 0. LANDING REGISTER ---
   Widget _buildLandingRegister() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+    return _buildBottomPinnedStep(
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 20),
+          const SizedBox(height: 16),
           const Icon(Icons.recycling, size: 60, color: AppColors.primarySage),
           const SizedBox(height: 8),
           const Text(
             'SAJUANG',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -176,9 +192,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           const Text(
             'Sampah Jadi Uang',
+            textAlign: TextAlign.center,
             style: TextStyle(color: AppColors.textDark),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
 
           Container(
             padding: const EdgeInsets.all(20),
@@ -218,34 +235,35 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Icons.check_circle_outline,
                   'Akun Siap Digunakan',
                 ),
-
-                const SizedBox(height: 30),
-
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _nextPage,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primarySage,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text(
-                      'Mulai Daftar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
               ],
             ),
           ),
-          const SizedBox(height: 20),
+
+          const Spacer(),
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _nextPage,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primarySage,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+              child: const Text(
+                'Mulai Daftar',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -272,8 +290,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- 1. STEP 1: DATA DIRI ---
   Widget _buildStep1DataDiri() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+    return _buildBottomPinnedStep(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -339,22 +356,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
             onChanged: (val) => setState(() => _selectedGender = val),
           ),
 
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: _handleLanjutBuatPassword,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primarySage,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+          const Spacer(),
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _handleLanjutBuatPassword,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primarySage,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
-            ),
-            child: const Text(
-              'Lanjut Buat Password',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              child: const Text(
+                'Lanjut Buat Password',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ),
@@ -365,8 +387,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   // --- 2. STEP 2: BUAT PASSWORD ---
   Widget _buildStep2BuatPassword() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24.0),
+    return _buildBottomPinnedStep(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -452,33 +473,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
 
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: _isLoading ? null : _handleRegisterSelesai,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primarySage,
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
+          const Spacer(),
+          const SizedBox(height: 24),
+
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isLoading ? null : _handleRegisterSelesai,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primarySage,
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
               ),
+              child: _isLoading
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'Simpan & Selesaikan',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
             ),
-            child: _isLoading
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : const Text(
-                    'Simpan & Selesaikan',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
           ),
         ],
       ),
